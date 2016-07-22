@@ -1,0 +1,17 @@
+proxy:
+    build: .
+    dockerfile: Dockerfile-nginx
+    ports:
+        - "80:80"
+    links:
+        - app
+    volumes:
+        - /tmp/uploads:/tmp/uploads
+
+app:
+    build: .
+    dockerfile: Dockerfile-gunicorn
+    expose:
+        - "5000"
+    volumes:
+        - /tmp/uploads/:/tmp/uploads
