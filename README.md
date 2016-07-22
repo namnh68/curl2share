@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/cuongnv23/curl2share.svg?branch=master)](https://travis-ci.org/cuongnv23/curl2share)
 ### About curl2share
 
 A simple file sharing app built on [`flask`](https://github.com/pallets/flask).
