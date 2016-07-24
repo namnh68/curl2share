@@ -3,10 +3,11 @@
 
 import os
 import json
+import tempfile
+import unittest
 from .context import app
 import pytest
 from config import MAX_FILE_SIZE
-import tempfile
 
 
 @pytest.fixture
@@ -17,99 +18,106 @@ def client():
     return test
 
 
-def create_tmpfile(content):
-    ''' Create a tmp file for reading '''
-    tmpdir = tempfile.mkdtemp()
-    tmpfile = os.path.join(tmpdir, 'test.txt')
-    with open(tmpfile, 'wb') as f:
-        f.write(content)
-    return tmpfile
+class HandlerTests(unittest.TestCase):
 
-samplefile = create_tmpfile('file content')
-largefile = create_tmpfile('file content' * MAX_FILE_SIZE)
+    def create_tmpfile(self, content):
+        ''' Create a tmp file for reading '''
+        tmpdir = tempfile.mkdtemp()
+        tmpfile = os.path.join(tmpdir, 'test.txt')
+        with open(tmpfile, 'wb') as f:
+            f.write(content)
+        return tmpfile
 
+    def check_response(self, resp, filename):
+        ''' Validate response'''
+        self.assertEqual(resp.status_code, 201)
+        self.assertEqual(resp.headers['Content-Type'], 'application/json')
+        resp_json = json.loads(resp.data)
+        self.assertTrue(str(resp_json['download']).endswith(filename))
+        self.assertTrue(str(resp_json['preview']).endswith(filename))
 
-def check_response(resp, filename):
-    assert resp.status_code == 201
-    assert resp.headers['Content-Type'] == 'application/json'
-    resp_json = json.loads(resp.data)
-    assert str(resp_json['download']).endswith(filename)
-    assert str(resp_json['preview']).endswith(filename)
+    def setUp(self):
+        self.client = client()
+        self.samplefile = self.create_tmpfile('content')
+        self.largefile = self.create_tmpfile('content' * MAX_FILE_SIZE)
 
+    def tearDown(self):
+        os.remove(self.samplefile)
+        os.remove(self.largefile)
 
-def test_post_form(client):
-    ''' Send POST request by form '''
-    # send file like curl -F file=@samplefile http://host/
-    rv = client.post('/', data={'file': (samplefile, 'test.txt')})
-    # send file like curl -F file=@samplefile http://host/newname.txt
-    rv_newname = client.post('/newname.txt', data={'file': (samplefile)})
+    def test_post_form(self):
+        ''' Send file via POST in multipart/form '''
+        # curl -F file=@samplefile http://host/
+        rv = self.client.post('/',
+                              data={'file': (self.samplefile, 'test.txt')})
+        # curl -F file=@samplefile http://host/newname.txt
+        rvn = self.client.post('/newname.txt',
+                               data={'file': (self.samplefile)})
 
-    check_response(rv, 'test.txt')
-    check_response(rv_newname, 'newname.txt')
+        self.check_response(rv, 'test.txt')
+        self.check_response(rvn, 'newname.txt')
 
+    def test_post_stream(self):
+        ''' Send file via POST in stream '''
+        # curl -X POST -T test.txt http://host/
+        rv = self.client.post('/test.txt', data=self.samplefile)
+        # curl -X POST -T test.txt http://host/newname.txt
+        rvn = self.client.post('/newname.txt', data=self.samplefile)
 
-def test_post_stream(client):
-    ''' Send POST request by stream '''
-    # curl -X POST --upload-file test.txt http://host/
-    rv = client.post('/test.txt', data=samplefile)
-    # curl -X POST --upload-file test.txt http://host/newname.txt
-    rv_newname = client.post('/newname.txt', data=samplefile)
+        self.check_response(rv, 'test.txt')
+        self.check_response(rvn, 'newname.txt')
 
-    check_response(rv, 'test.txt')
-    check_response(rv_newname, 'newname.txt')
+    def test_put_form(self):
+        ''' Send file via PUT in multipart/form '''
+        # curl -X PUT -F file=@test.txt http://host/
+        rv = self.client.put('/', data={'file': (self.samplefile, 'test.txt')})
+        # curl -X PUT -F file=@test.txt http://host/newname.txt
+        rvn = self.client.put('/newname.txt', data={'file': (self.samplefile)})
 
+        self.check_response(rv, 'test.txt')
+        self.check_response(rvn, 'newname.txt')
 
-def test_put_form(client):
-    ''' Send PUT request by form '''
-    # curl -X PUT -F file=@test.txt http://host/
-    rv = client.put('/', data={'file': (samplefile, 'test.txt')})
-    # curl -X PUT -F file=@test.txt http://host/newname.txt
-    rv_newname = client.put('/newname.txt', data={'file': (samplefile)})
+    def test_put_stream(self):
+        ''' Send file via PUT in stream '''
+        # curl -X PUT -T test.txt http://host/
+        rv = self.client.put('/test.txt', data=self.samplefile)
+        # curl -X PUT -T test.txt http://host/newname.txt
+        rvn = self.client.put('/newname.txt', data=self.samplefile)
+        self.check_response(rv, 'test.txt')
+        self.check_response(rvn, 'newname.txt')
 
-    check_response(rv, 'test.txt')
-    check_response(rv_newname, 'newname.txt')
+    def test_large_file_post(self):
+        ''' Send file via POST with large file '''
+        # curl -X POST -F file=@test.txt http://host/
+        rvf = self.client.post('/', data={'file': (self.largefile, 'test.txt')})
+        # curl -X POST -T test.txt http://host/
+        rvs = self.client.post('/test.txt', data='content' * MAX_FILE_SIZE)
 
+        self.assertEqual(rvf.status_code, 413)
+        self.assertEqual(rvs.status_code, 413)
 
-def test_put_stream(client):
-    ''' Send PUT request by stream '''
-    # curl -X PUT --upload-file test.txt http://host/
-    rv = client.put('/test.txt', data=samplefile)
-    # curl -X PUT --upload-file test.txt http://host/newname.txt
-    rv_newname = client.put('/newname.txt', data=samplefile)
-    check_response(rv, 'test.txt')
-    check_response(rv_newname, 'newname.txt')
+    def test_large_file_put(self):
+        ''' Send file via PUT with large file '''
+        # curl -X PUT -F file=@test.txt http://host/
+        rvf = self.client.put('/', data={'file': (self.largefile, 'test.txt')})
+        # curl -X PUT -T test.txt http://host/
+        rvs = self.client.put('/test.txt', data='content' * MAX_FILE_SIZE)
 
+        self.assertEqual(rvf.status_code, 413)
+        self.assertEqual(rvs.status_code, 413)
 
-def test_large_file_post(client):
-    ''' Send POST request by large file object '''
-    # curl -X POST -F file=@test.txt http://host/
-    rv_form = client.post('/', data={'file': (largefile, 'test.txt')})
-    # curl -X POST --upload-file test.txt http://host/
-    rv_stream = client.post('/test.txt', data='content' * MAX_FILE_SIZE)
+    def test_empty_file_post(self):
+        ''' Send file via POST with empty file '''
+        from StringIO import StringIO
+        # curl -X POST -F file=@empty.txt http://host/
+        rvf = self.client.post('/', data={'file': (StringIO(), 'empty.txt')})
+        # curl -X PUT -F -T empty.txt
+        rvs = self.client.post('/empty.txt', data='')
 
-    assert rv_form.status_code == 413
-    assert rv_stream.status_code == 413
+        self.assertEqual(rvf.status_code, 400)
+        self.assertEqual(rvs.status_code, 400)
+        self.assertEqual(rvs.data, 'No data received')
+        self.assertEqual(rvf.data, 'No data received')
 
-
-def test_large_file_put(client):
-    ''' Send PUT request by large file object '''
-    # curl -X PUT -F file=@test.txt http://host/
-    rv_form = client.put('/', data={'file': (largefile, 'test.txt')})
-    # curl -X PUT --upload-file test.txt http://host/
-    rv_stream = client.put('/test.txt', data='content' * MAX_FILE_SIZE)
-
-    assert rv_form.status_code == 413
-    assert rv_stream.status_code == 413
-
-
-def test_empty_file_post(client):
-    from StringIO import StringIO
-    # curl -X POST -F file=@empty.txt http://host/
-    rv_form = client.post('/', data={'file': (StringIO(), 'empty.txt')})
-    # curl -X PUT -F --upload-file empty.txt
-    rv_stream = client.post('/empty.txt', data='')
-
-    assert rv_form.status_code == 400
-    assert rv_stream.status_code == 400
-    assert rv_stream.data == 'No data received'
-    assert rv_form.data == 'No data received'
+if __name__ == '__main__':
+    unittest.main()
