@@ -11,7 +11,7 @@ from flask import request, abort
 from upload.logs import logger
 
 
-class FileSystemHandler:
+class FileSystemStorage:
     ''' Handle utils for file system '''
     def __init__(self, store_dir):
         self.store_dir = store_dir

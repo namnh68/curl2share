@@ -5,13 +5,13 @@ from flask import Flask, request, make_response, \
     send_from_directory, abort, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 from config import UPLOAD_DIR, MAX_FILE_SIZE
-from upload.utils import FileSystemHandler, RequestHandler
+from upload.utils import FileSystemStorage, RequestHandler
 from upload.logs import logger
 
 
 app = Flask(__name__)
 
-util = FileSystemHandler(UPLOAD_DIR)
+util = FileSystemStorage(UPLOAD_DIR)
 req = RequestHandler()
 
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
