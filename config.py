@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# directory store files. MANDATORY
+# storage type ( S3 or FILESYSTEM )
+STORAGE = 'S3'
 UPLOAD_DIR = '/tmp/uploads'
+AWS_BUCKET = 'curl2share'
+AWS_REGION = 'ap-southeast-1'
 # length of uri in random format. Default '6'
 RAND_DIR_LENGTH = 6
 # max file size. MANDATORY
