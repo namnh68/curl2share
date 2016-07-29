@@ -30,9 +30,9 @@ class HandlerTests(unittest.TestCase):
 
     def check_response(self, resp, filename):
         ''' Validate response'''
+        resp_json = json.loads(resp.data)
         self.assertEqual(resp.status_code, 201)
         self.assertEqual(resp.headers['Content-Type'], 'application/json')
-        resp_json = json.loads(resp.data)
         self.assertTrue(str(resp_json['download']).endswith(filename))
         self.assertTrue(str(resp_json['preview']).endswith(filename))
 
@@ -89,7 +89,8 @@ class HandlerTests(unittest.TestCase):
     def test_large_file_post(self):
         ''' Send file via POST with large file '''
         # curl -X POST -F file=@test.txt http://host/
-        rvf = self.client.post('/', data={'file': (self.largefile, 'test.txt')})
+        rvf = self.client.post('/', data={'file': (self.largefile,
+                                                   'test.txt')})
         # curl -X POST -T test.txt http://host/
         rvs = self.client.post('/test.txt', data='content' * MAX_FILE_SIZE)
 

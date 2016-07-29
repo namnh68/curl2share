@@ -4,15 +4,19 @@ import os
 from flask import Flask, request, make_response, \
     send_from_directory, abort, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
-from config import UPLOAD_DIR, MAX_FILE_SIZE
-from upload.utils import FileSystemHandler, RequestHandler
+from config import MAX_FILE_SIZE, STORAGE
 from upload.logs import logger
-
+from upload.utils import Util
+if STORAGE == 'S3':
+    from upload.storage import S3 as Storage
+elif STORAGE == 'FILESYSTEM':
+    from config import UPLOAD_DIR
+    from upload.storage import FileSystem as Storage
 
 app = Flask(__name__)
 
-util = FileSystemHandler(UPLOAD_DIR)
-req = RequestHandler()
+s = Storage()
+util = Util()
 
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 
@@ -46,12 +50,18 @@ def file_too_large(err):
     return make_response('File too large. Limit {}MB'.format(limit_size), 413)
 
 
+@app.errorhandler(500)
+def internal_error(err):
+    ''' HTTP 500 code '''
+    return make_response('Something went wrong. Sorry for this inconvenience',
+                         500)
+
+
 @app.route('/', defaults={'file_name': ''}, methods=['POST', 'PUT'])
 @app.route('/<string:file_name>', methods=['POST', 'PUT'])
 def upload(file_name):
     ''' Write data '''
-    subdir = req.rand()
-    store_dir = os.path.join(UPLOAD_DIR, subdir)
+    subdir = util.rand()
     file_obj = request.files.get('file')
     if file_obj:
         '''
@@ -66,20 +76,28 @@ def upload(file_name):
             fname = secure_filename(file_obj.filename)
         else:
             fname = secure_filename(file_name)
-        req.validate_filesize(filesize)
+        util.validate_filesize(filesize)
         url_path = '/'.join([subdir, fname])
-        util.mkdir(store_dir)
-        util.write_form(os.path.join(store_dir, fname), file_obj)
+        if STORAGE == 'FILESYSTEM':
+            store_dir = os.path.join(UPLOAD_DIR, subdir)
+            s.mkdir(store_dir)
+            s.post(os.path.join(UPLOAD_DIR, url_path), file_obj)
+        elif STORAGE == 'S3':
+            s.post(url_path)
     elif not file_obj and file_name:
         '''
         curl -X POST|PUT --upload-file myfile
         '''
         filesize = request.content_length
-        req.validate_filesize(filesize)
+        util.validate_filesize(filesize)
         fname = secure_filename(file_name)
         url_path = '/'.join([subdir, fname])
-        util.mkdir(store_dir)
-        util.write_stream(os.path.join(store_dir, fname))
+        if STORAGE == 'FILESYSTEM':
+            store_dir = os.path.join(UPLOAD_DIR, subdir)
+            s.mkdir(store_dir)
+            s.put(os.path.join(UPLOAD_DIR, url_path))
+        elif STORAGE == 'S3':
+            s.put(url_path)
     else:
         abort(400)
 
@@ -94,28 +112,40 @@ def upload(file_name):
 @app.route('/d/<path:path>', methods=['GET'])
 def download(path):
     ''' Return file '''
-    logger.info('GET {}'.format(path))
-    filename = os.path.basename(path)
-    response = make_response(send_from_directory(UPLOAD_DIR, path))
-    response.headers['Content-Disposition'] = \
-        'attachment; filename="{}"'.format(filename)
+    filename = secure_filename(os.path.basename(path))
+    if STORAGE == 'S3':
+        body = s.get(path)
+        resp = make_response(body)
+    if STORAGE == 'FILESYSTEM':
+        try:
+            resp = make_response(send_from_directory(UPLOAD_DIR, path))
+        except:
+            logger.error('Unable to download {}'.format(path), exc_info=True)
+            abort(500)
 
-    return response
+    resp.headers['Content-Disposition'] = \
+        'attachment; filename="{}"'.format(filename)
+    return resp
 
 
 @app.route('/<path:path>', methods=['GET'])
 def preview(path):
-    ''' Return file from path directory'''
+    ''' Render a preview page based on file information '''
     logger.info('GET {}'.format(path))
     dl_url = url_for('download', path=path, _external=True)
-    file = os.path.join(UPLOAD_DIR, path)
+    if STORAGE == 'S3':
+        info = s.info(path)
+        filename = os.path.basename(path)
+        filesize = info['content_length']
+        filetype = info['content_type']
+    if STORAGE == 'FILESYSTEM':
+        file = os.path.join(UPLOAD_DIR, path)
+        if not os.path.isfile(file):
+            abort(404)
+        filename = os.path.basename(file)
+        filesize = os.path.getsize(file)
+        filetype = s.mime(file)
 
-    if not os.path.isfile(file):
-        abort(404)
-
-    filesize = os.path.getsize(file)
-    filename = os.path.basename(file)
-    filetype = req.get_mime(file)
     return render_template('preview.html',
                            title=filename,
                            file_name=filename,
