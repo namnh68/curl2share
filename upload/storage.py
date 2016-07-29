@@ -6,106 +6,98 @@ import magic
 import errno
 from flask import request, abort
 import boto3 as boto
-from config import AWS_REGION, AWS_BUCKET, UPLOAD_DIR
+import botocore
+from config import AWS_BUCKET, UPLOAD_DIR
 from upload.logs import logger
 
 
-class S3Storage:
+class S3(object):
     ''' Handle request and write to S3 '''
     def __init__(self):
-        self.aws_secret = os.environ.get('AWS_SECRET_ACCESS_KEY')
-        self.aws_key = os.environ.get('AWS_ACCESS_KEY_ID')
-        self.region = AWS_REGION
         self.bucket = AWS_BUCKET
         self.conn = boto.resource('s3')
-        if not self.aws_key or not self.aws_secret:
-            raise ImportError("""
-                              Neither AWS_ACCESS_KEY_ID nor
-                              AWS_SECRET_ACCESS_KEY configured
-                              """)
+        self.client = boto.client('s3')
 
-    def _mime(self, buf):
+    def _mime(self, fobj):
         '''
-        Detect mime type by reading first buf bytes
+        Detect mime type of fobj
         '''
-        return magic.from_buffer(buf, mime=True)
+        return magic.from_buffer(fobj, mime=True)
 
-    def _write(self, key, fobj, type):
+    def _write(self, key, fobj, mime):
         '''
-        Receive file content via fobj and write to key on bucket
-        with mimetype is type
+        Receive file content via fobj.
+        Write to key on bucket.
+        Mimetype is type
         '''
         try:
+            logger.debug('Trying to upload {}'.format(key))
             resp = self.conn.Object(self.bucket, key).put(Body=fobj,
-                                                          ContentType=type)
-            if resp['ResponseMetadata']['HTTPStatusCode'] != 200:
-                logger.error('Failed to put {} to bucket {}'.format(
-                    key, self.bucket))
-                return False
+                                                          ContentType=mime)
+            if resp['ResponseMetadata']['HTTPStatusCode'] == 200:
+                logger.info('{} is uploaded to S3'.format(key))
+                return
             else:
-                return True
+                logger.error('Failed to upload {} to S3'.format(key),
+                             exc_info=True)
+                abort(500)
         except:
-            logger.error('S3 connection error', exc_info=True)
-            return False
+            logger.critical('S3 connection error', exc_info=True)
+            abort(500)
+
+    def head(self, key):
+        '''
+        Make a HEAD request to get object metadata
+        '''
+        try:
+            resp = self.client.head_object(Bucket=self.bucket, Key=key)
+            return resp['ResponseMetadata']
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                logger.error('{} does not exist'.format(key), exc_info=True)
+                abort(404)
+            else:
+                raise
+        except:
+            logger.error('Error while attempt to reach {}'.format(key))
+            abort(500)
 
     def put(self, key):
-        ''' Write data sent via PUT method '''
-        body = request.stream
-        type = self._mime(body.read(1024))
-        if not self._write(key, body.read(), type):
-            abort(500)
+        ''' Write to key by data sent via PUT method '''
+        body = request.stream.read()
+        mime = self._mime(body)
+        self._write(key, body, mime)
 
     def post(self, key):
-        ''' Write data sent via POST '''
-        body = request.files.get('file')
-        type = self._mime(body.read(1024))
-        body.seek(0)
-        if not self._write(key, body, type):
-            abort(500)
+        ''' Write to key by data sent via POST method '''
+        body = request.files['file'].read()
+        mime = self._mime(body)
+        self._write(key, body, mime)
 
-    def exists(self, key):
-        '''
-        Check if key exists on bucket
-        '''
-        c = boto.client('s3')
-        try:
-            resp = c.head_object(Bucket=self.bucket, Key=key)
-            return True and resp['ResponseMetadata']['HTTPStatusCode']
-        except:
-            logger.error('Error while checking object existence.',
-                         exec_info=True)
-            return False
-
-    def info(self, key):
-        ''' Make a HEAD to get object(key) info '''
-        info = dict()
-        try:
-            c = boto.client('s3')
-            resp = c.head_object(Bucket=self.bucket, Key=key)
-            headers = resp['ResponseMetadata']['HTTPHeaders']
-            info['content_length'] = headers['content-length']
-            info['content_type'] = headers['content-type']
-            return info
-        except:
-            logger.error('Failed to get object info {} on bucket {}'.format(
-                        key, self.bucket), exc_info=True)
-            return False
-
-    def read(self, key):
+    def get(self, key):
         '''
         Get key from bucket.
         This method shoud be used for development only.
         '''
-        if self.exists(key):
-            try:
-                return self.conn.Object(self.bucket, key).get()['Body'].read()
-            except TypeError:
-                logger.error('Failed to GET object {} from bucket {}'.format(
-                            key, self.bucket), exec_info=True)
-                return False
+        if self.head(key):
+            logger.info('Downloaded {}'.format(key))
+            return self.conn.Object(self.bucket, key).get()['Body'].read()
+        else:
+            logger.error('Failed to download {}'.format(key), exc_info=True)
+            abort(500)
+
+    def info(self, key):
+        ''' Make a HEAD to get info of key '''
+        info = dict()
+        resp = self.head(key)
+        if resp:
+            headers = resp['HTTPHeaders']
+            info['content_length'] = headers['content-length']
+            info['content_type'] = headers['content-type']
+            return info
 
 
-class FileSystemStorage:
+class FileSystem(object):
     ''' Handle utils for file system '''
     def __init__(self):
         self.store_dir = UPLOAD_DIR

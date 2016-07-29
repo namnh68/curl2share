@@ -8,11 +8,10 @@ from config import MAX_FILE_SIZE, STORAGE
 from upload.logs import logger
 from upload.utils import Util
 if STORAGE == 'S3':
-    from upload.storage import S3Storage as Storage
+    from upload.storage import S3 as Storage
 elif STORAGE == 'FILESYSTEM':
     from config import UPLOAD_DIR
-    from upload.storage import FileSystemStorage as Storage
-
+    from upload.storage import FileSystem as Storage
 
 app = Flask(__name__)
 
@@ -96,7 +95,7 @@ def upload(file_name):
         if STORAGE == 'FILESYSTEM':
             store_dir = os.path.join(UPLOAD_DIR, subdir)
             s.mkdir(store_dir)
-            s.post(os.path.join(UPLOAD_DIR, url_path))
+            s.put(os.path.join(UPLOAD_DIR, url_path))
         elif STORAGE == 'S3':
             s.put(url_path)
     else:
@@ -113,19 +112,19 @@ def upload(file_name):
 @app.route('/d/<path:path>', methods=['GET'])
 def download(path):
     ''' Return file '''
-    logger.info('GET {}'.format(path))
     filename = secure_filename(os.path.basename(path))
     if STORAGE == 'S3':
-        body = s.read(path)
-        if not body:
-            abort(500)
+        body = s.get(path)
         resp = make_response(body)
-        resp.headers['Content-Disposition'] = \
-            'attachment; filename="{}"'.format(filename)
     if STORAGE == 'FILESYSTEM':
-        resp = make_response(send_from_directory(UPLOAD_DIR, path))
-        resp.headers['Content-Disposition'] = \
-            'attachment; filename="{}"'.format(filename)
+        try:
+            resp = make_response(send_from_directory(UPLOAD_DIR, path))
+        except:
+            logger.error('Unable to download {}'.format(path), exc_info=True)
+            abort(500)
+
+    resp.headers['Content-Disposition'] = \
+        'attachment; filename="{}"'.format(filename)
     return resp
 
 
@@ -136,8 +135,6 @@ def preview(path):
     dl_url = url_for('download', path=path, _external=True)
     if STORAGE == 'S3':
         info = s.info(path)
-        if not info:
-            abort(404)
         filename = os.path.basename(path)
         filesize = info['content_length']
         filetype = info['content_type']
