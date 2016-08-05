@@ -3,3 +3,4 @@ COPY upload/static /etc/nginx/html/static
 COPY conf/nginx/default.conf /etc/nginx/conf.d/default.conf
 
 CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 8888 80 

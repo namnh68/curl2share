@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 from flask import Flask, request, make_response, \
-    send_from_directory, abort, url_for, render_template, jsonify
+    send_from_directory, abort, url_for, render_template
 from werkzeug.utils import secure_filename
 from config import MAX_FILE_SIZE, STORAGE
 from upload.logs import logger
@@ -24,6 +24,7 @@ app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE
 @app.errorhandler(400)
 def bad_request(err):
     ''' HTTP 400 code '''
+    logger.error('{}'.format(err.description))
     return make_response('{}'.format(err.description), 400)
 
 
@@ -62,51 +63,47 @@ def internal_error(err):
 def upload(file_name):
     ''' Write data '''
     subdir = util.rand()
-    file_obj = request.files.get('file')
-    if file_obj:
-        '''
-        curl -X POST|PUT -F file=@myfile
-        '''
-        # check if file sent is empty or not
-        file_obj.seek(0, os.SEEK_END)
-        filesize = file_obj.tell()
-        file_obj.seek(0)
+    ct = request.headers.get('Content-Type')
+    if ct and ct.split(';')[0] == 'multipart/form-data':
+        req = request.files['file']
+        # In Mulitpart/form-data, request.content_length doesn't represent
+        # actual file size.
+        # We have to check it manually.
+        req.seek(0, os.SEEK_END)
+        filesize = req.tell()
+        req.seek(0)
+        # validate if file size is too large or empty
+        util.validate_filesize(filesize)
 
+        # Handle in case no file_name input.
+        # Eg: curl -X POST -F file=@file server
         if not file_name:
-            fname = secure_filename(file_obj.filename)
+            fname = secure_filename(req.filename)
         else:
             fname = secure_filename(file_name)
-        util.validate_filesize(filesize)
-        url_path = '/'.join([subdir, fname])
-        if STORAGE == 'FILESYSTEM':
-            store_dir = os.path.join(UPLOAD_DIR, subdir)
-            s.mkdir(store_dir)
-            s.post(os.path.join(UPLOAD_DIR, url_path), file_obj)
-        elif STORAGE == 'S3':
-            s.post(url_path)
-    elif not file_obj and file_name:
-        '''
-        curl -X POST|PUT --upload-file myfile
-        '''
+    elif not ct:
+        # Handle case file sent via stream
+        # Eg: curl -X POST|PUT --upload-file myfile
+        req = request.stream
         filesize = request.content_length
         util.validate_filesize(filesize)
         fname = secure_filename(file_name)
-        url_path = '/'.join([subdir, fname])
-        if STORAGE == 'FILESYSTEM':
-            store_dir = os.path.join(UPLOAD_DIR, subdir)
-            s.mkdir(store_dir)
-            s.put(os.path.join(UPLOAD_DIR, url_path))
-        elif STORAGE == 'S3':
-            s.put(url_path)
     else:
-        abort(400)
+        abort(400, 'Bad request')
+    dest = '/'.join([subdir, fname])
+    if STORAGE == 'FILESYSTEM':
+        store_dir = os.path.join(UPLOAD_DIR, subdir)
+        s.mkdir(store_dir)
+        s.write(os.path.join(UPLOAD_DIR, dest), req)
+    if STORAGE == 'S3':
+        partsize = 1024*1024*5
+        if filesize >= partsize:
+            s.upload_multipart(dest, req)
+        else:
+            s.upload(dest, req)
+    prv_url = url_for("preview", path=dest, _external=True)
 
-    prv_url = url_for("preview", path=url_path, _external=True)
-    dl_url = url_for("download", path=url_path, _external=True)
-
-    resp = jsonify(download=dl_url, preview=prv_url)
-
-    return resp, 201
+    return prv_url, 201
 
 
 @app.route('/d/<path:path>', methods=['GET'])

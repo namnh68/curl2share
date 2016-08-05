@@ -2,9 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import string
+import logging
 from config import RAND_DIR_LENGTH, MAX_FILE_SIZE
 from random import SystemRandom as SR
 from flask import abort
+
+logger = logging.getLogger(__name__)
 
 
 class Util:
@@ -20,4 +23,5 @@ class Util:
         if file_size > MAX_FILE_SIZE:
             abort(413)
         if not file_size:
-            abort(400, 'No data received')
+            logger.error('File is empty')
+            abort(400, 'File is empty')

@@ -9,6 +9,7 @@ proxy:
         - /tmp/uploads:/tmp/uploads
 
 app:
+    env_file: .env
     build: .
     dockerfile: Dockerfile-gunicorn
     expose:

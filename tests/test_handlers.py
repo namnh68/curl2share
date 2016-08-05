@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
 import tempfile
 import unittest
 from .context import app
@@ -30,11 +29,8 @@ class HandlerTests(unittest.TestCase):
 
     def check_response(self, resp, filename):
         ''' Validate response'''
-        resp_json = json.loads(resp.data)
         self.assertEqual(resp.status_code, 201)
-        self.assertEqual(resp.headers['Content-Type'], 'application/json')
-        self.assertTrue(str(resp_json['download']).endswith(filename))
-        self.assertTrue(str(resp_json['preview']).endswith(filename))
+        self.assertTrue(resp.data.endswith(filename))
 
     def setUp(self):
         self.client = client()
@@ -117,8 +113,8 @@ class HandlerTests(unittest.TestCase):
 
         self.assertEqual(rvf.status_code, 400)
         self.assertEqual(rvs.status_code, 400)
-        self.assertEqual(rvs.data, 'No data received')
-        self.assertEqual(rvf.data, 'No data received')
+        self.assertEqual(rvs.data, 'File is empty')
+        self.assertEqual(rvf.data, 'File is empty')
 
 if __name__ == '__main__':
     unittest.main()
