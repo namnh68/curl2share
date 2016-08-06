@@ -3,36 +3,42 @@
 
 import os
 import magic
-import errno
+import logging
+
 from flask import request, abort
 import boto3 as boto
 import botocore
+
 from config import AWS_BUCKET, UPLOAD_DIR
-from upload.logs import logger
+
+
+logger = logging.getLogger(__name__)
 
 
 class S3(object):
-    ''' Handle request and write to S3 '''
+    '''
+    Handle request and write to S3
+    '''
     def __init__(self):
         self.bucket = AWS_BUCKET
         self.conn = boto.resource('s3')
         self.client = boto.client('s3')
 
-    def _mime(self, fheader):
+    def mime(self, fheader):
         '''
-        Detect mime type
-        fheader: first data read to get mime type
+        Detect mime type by reading file header.
+        fheader: first data read
         '''
         return magic.from_buffer(fheader, mime=True)
 
     def upload(self, key, req):
         '''
-        Upload file to S3 using single upload
-        key: object key on s3
-        req: request object to read content
+        Directly upload file to s3. Use this for small file size
+        key: object path to upload
+        req: request object contains file data.
         '''
         fheader = req.read(1024)
-        mime = self._mime(fheader)
+        mime = self.mime(fheader)
         body = fheader + req.read()
         disposition = 'attachment; filename="{}"'.format(os.path.basename(key))
         try:
@@ -55,13 +61,14 @@ class S3(object):
 
     def upload_multipart(self, key, req, psize=1024*1024*5):
         '''
-        Upload multiprt to s3
-        key: key object on s3
-        req: request object to read content
-        psize: size of each part
+        Upload multipart to s3
+        key: object path to upload
+        req: request object contains file data.
+        psize: size of each part. Default is 5MB.
         '''
+        # only need first 1024 bytes for mime()
         fheader = req.read(1024)
-        mime = self._mime(fheader)
+        mime = self.mime(fheader)
         disposition = 'attachment; filename="{}"'.format(os.path.basename(key))
         try:
             # initialize multipart upload
@@ -99,9 +106,7 @@ class S3(object):
                             PartNumber=part,
                             UploadId=mpu['UploadId']
                         )
-
                         logger.info('Part {} uploaded'.format(part))
-
                         part_info['Parts'].append(
                             {
                                 'ETag': resp['ETag'],
@@ -126,7 +131,7 @@ class S3(object):
                 UploadId=mpu['UploadId'])
             if result:
                 logger.info('Multipart upload completed!')
-                return True
+                return
             else:
                 raise
         except KeyboardInterrupt:
@@ -144,15 +149,18 @@ class S3(object):
             if abort_mpu:
                 logger.info('Aborted!')
             else:
-                logger.error('Aborting failed!')
+                logger.error('Abort failed!')
             abort(500)
 
-    def head(self, key):
+    def exists(self, key):
         '''
-        Make a HEAD request to get object metadata
+        Send a HEAD request to see if object exists.
+        If object exists, return its Metadata.
+        key: object path to check existence
         '''
         try:
-            resp = self.client.head_object(Bucket=self.bucket, Key=key)
+            resp = self.client.head_object(Bucket=self.bucket,
+                                           Key=key)
             return resp['ResponseMetadata']
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == '404':
@@ -166,30 +174,32 @@ class S3(object):
 
     def get(self, key):
         '''
-        Get file from bucket.
+        Download an object from bucket.
         This method shoud be used for development only.
-        key: object key to fetch
+        key: object path to download
         '''
-        if self.head(key):
+        if self.exists(key):
             logger.info('Downloaded {}'.format(key))
             return self.conn.Object(self.bucket, key).get()['Body'].read()
-        else:
-            logger.error('Failed to download {}'.format(key), exc_info=True)
-            abort(500)
 
     def info(self, key):
-        ''' Make a HEAD to get info of key '''
-        info = dict()
-        resp = self.head(key)
+        '''
+        Get metadata of object and return a dict
+        key: object path to get metadata
+        '''
+        _info = dict()
+        resp = self.exists(key)
         if resp:
             headers = resp['HTTPHeaders']
-            info['content_length'] = headers['content-length']
-            info['content_type'] = headers['content-type']
-            return info
+            _info['content_length'] = headers['content-length']
+            _info['content_type'] = headers['content-type']
+            return _info
 
 
 class FileSystem(object):
-    ''' Handle utils for file system '''
+    '''
+    Handle request and write to file system
+    '''
     def __init__(self):
         self.store_dir = UPLOAD_DIR
         if not (os.path.isdir(self.store_dir) and
@@ -197,44 +207,40 @@ class FileSystem(object):
             raise OSError('{} does not exist or inaccessible!'.format(
                 self.store_dir))
 
-    def mkdir(self, path):
-        ''' Create directory in path '''
-        logger.info('Creating directory {}'.format(path))
-        try:
-            os.mkdir(path)
-            logger.info('{} created!'.format(path))
-        except IOError as io_exc:
-            logger.error('{}'.format(io_exc), exc_info=True)
-            raise
-        except OSError as os_exc:
-            if os_exc.errno == errno.EEXIST and os.access(path, os.W_OK):
-                logger.warn('{} already exists'.format(path))
-            else:
-                logger.error('Failed to create dir {}'.format(path),
-                             exc_info=True)
-                raise
-
     def mime(self, dest):
-        ''' Get mime type of file '''
-        return magic.from_file(dest, mime=True)
+        '''
+        Detect mime type by reading first 1024 bytes of file
+        dest: file to detect mime type
+         '''
+        return magic.from_buffer(open(dest).read(1024), mime=True)
 
     def write(self, dest, req):
+        '''
+        Write file content to disk
+        dest: file to save
+        req: request object contains file data.
+        '''
         try:
+            # assume req = request.files['file']
             req.save(dest)
             logger.info('{} saved to disk'.format(dest))
         except AttributeError:
             try:
+                # req = request.stream
                 with open(dest, 'wb') as f:
+                    # limit chunk size to read at a time
                     buf_max = 1024 * 500
                     buf = 1024 * 16
                     while True:
                         chunk = request.stream.read(buf)
                         if chunk:
                             f.write(chunk)
+                            # double chunk size in each iteration
                             if buf < buf_max:
                                 buf = buf * 2
                         else:
                             break
+                logger.info('{} saved to disk.'.format(dest))
             except:
                 raise
         except:

@@ -6,5 +6,5 @@ import os
 
 sys.path.insert(0, os.path.abspath('..'))
 
-from upload.handlers import app
+from curl2share.handlers import app
 import config
