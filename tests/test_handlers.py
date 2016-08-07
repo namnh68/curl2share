@@ -3,9 +3,11 @@
 
 import os
 import tempfile
+
 import unittest
-from tests.context import app
 import pytest
+
+from tests.context import app
 from config import MAX_FILE_SIZE
 
 
@@ -57,7 +59,7 @@ class HandlerTests(unittest.TestCase):
                               data={'file': (self.samplefile, 'test.txt')})
         # curl -F file=@samplefile http://host/newname.txt
         rvn = self.client.post('/newname.txt',
-                               data={'file': (self.samplefile)})
+                               data={'file': (self.samplefile, 'test.txt')})
         self.check_success(rv, 'test.txt')
         self.check_success(rvn, 'newname.txt')
 
@@ -76,7 +78,8 @@ class HandlerTests(unittest.TestCase):
         # curl -X PUT -F file=@test.txt http://host/
         rv = self.client.put('/', data={'file': (self.samplefile, 'test.txt')})
         # curl -X PUT -F file=@test.txt http://host/newname.txt
-        rvn = self.client.put('/newname.txt', data={'file': (self.samplefile)})
+        rvn = self.client.put('/newname.txt',
+                              data={'file': (self.samplefile, 'test.txt')})
 
         self.check_success(rv, 'test.txt')
         self.check_success(rvn, 'newname.txt')
