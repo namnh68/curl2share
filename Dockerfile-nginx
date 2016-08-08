@@ -1,6 +1,6 @@
 FROM nginx:stable-alpine
-COPY upload/static /etc/nginx/html/static
-COPY conf/nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY curl2share/static /etc/nginx/html/static
+COPY conf/nginx/file_system.conf /etc/nginx/conf.d/default.conf
 
 CMD ["nginx", "-g", "daemon off;"]
 EXPOSE 8888 80 
