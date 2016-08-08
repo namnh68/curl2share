@@ -3,13 +3,15 @@
 
 # storage type ( S3 or FILESYSTEM )
 STORAGE = 'FILESYSTEM'
+# directory to store files uploaded in local file system
 UPLOAD_DIR = '/tmp/uploads'
+# s3 bucket to store files uploaded
 AWS_BUCKET = 'curl2share'
 # length of uri in random format. Default '6'
 RAND_DIR_LENGTH = 6
-# max file size in MB. MANDATORY
+# maximum file size allowed to upload in MB
 MAX_FILE_SIZE = 10
-# log level(CRITICAL, ERROR, WARNING, INFO, DEBUG). Default 'INFO'
+# log level
 LOG_LEVEL = 'INFO'
-# log file. MANDATORY
+# log file
 LOG_FILE = '/tmp/upload.log'
