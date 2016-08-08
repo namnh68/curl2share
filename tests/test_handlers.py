@@ -2,11 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os
-import json
 import tempfile
+
 import unittest
-from .context import app
 import pytest
+
+from tests.context import app
 from config import MAX_FILE_SIZE
 
 
@@ -28,18 +29,24 @@ class HandlerTests(unittest.TestCase):
             f.write(content)
         return tmpfile
 
-    def check_response(self, resp, filename):
+    def check_success(self, resp, filename):
         ''' Validate response'''
         self.assertEqual(resp.status_code, 201)
-        self.assertEqual(resp.headers['Content-Type'], 'application/json')
-        resp_json = json.loads(resp.data)
-        self.assertTrue(str(resp_json['download']).endswith(filename))
-        self.assertTrue(str(resp_json['preview']).endswith(filename))
+        self.assertTrue(resp.data.endswith(filename))
+
+    def check_largefile(self, resp):
+        ''' Validate request of large file '''
+        self.assertEqual(resp.status_code, 413)
+
+    def check_badrequest(self, resp):
+        ''' Validate bad request '''
+        self.assertEqual(resp.status_code, 400)
 
     def setUp(self):
+        self.maxsize = MAX_FILE_SIZE * 1024 * 1024
         self.client = client()
         self.samplefile = self.create_tmpfile('content')
-        self.largefile = self.create_tmpfile('content' * MAX_FILE_SIZE)
+        self.largefile = self.create_tmpfile('content' * self.maxsize)
 
     def tearDown(self):
         os.remove(self.samplefile)
@@ -52,10 +59,9 @@ class HandlerTests(unittest.TestCase):
                               data={'file': (self.samplefile, 'test.txt')})
         # curl -F file=@samplefile http://host/newname.txt
         rvn = self.client.post('/newname.txt',
-                               data={'file': (self.samplefile)})
-
-        self.check_response(rv, 'test.txt')
-        self.check_response(rvn, 'newname.txt')
+                               data={'file': (self.samplefile, 'test.txt')})
+        self.check_success(rv, 'test.txt')
+        self.check_success(rvn, 'newname.txt')
 
     def test_post_stream(self):
         ''' Send file via POST in stream '''
@@ -64,18 +70,19 @@ class HandlerTests(unittest.TestCase):
         # curl -X POST -T test.txt http://host/newname.txt
         rvn = self.client.post('/newname.txt', data=self.samplefile)
 
-        self.check_response(rv, 'test.txt')
-        self.check_response(rvn, 'newname.txt')
+        self.check_success(rv, 'test.txt')
+        self.check_success(rvn, 'newname.txt')
 
     def test_put_form(self):
         ''' Send file via PUT in multipart/form '''
         # curl -X PUT -F file=@test.txt http://host/
         rv = self.client.put('/', data={'file': (self.samplefile, 'test.txt')})
         # curl -X PUT -F file=@test.txt http://host/newname.txt
-        rvn = self.client.put('/newname.txt', data={'file': (self.samplefile)})
+        rvn = self.client.put('/newname.txt',
+                              data={'file': (self.samplefile, 'test.txt')})
 
-        self.check_response(rv, 'test.txt')
-        self.check_response(rvn, 'newname.txt')
+        self.check_success(rv, 'test.txt')
+        self.check_success(rvn, 'newname.txt')
 
     def test_put_stream(self):
         ''' Send file via PUT in stream '''
@@ -83,28 +90,29 @@ class HandlerTests(unittest.TestCase):
         rv = self.client.put('/test.txt', data=self.samplefile)
         # curl -X PUT -T test.txt http://host/newname.txt
         rvn = self.client.put('/newname.txt', data=self.samplefile)
-        self.check_response(rv, 'test.txt')
-        self.check_response(rvn, 'newname.txt')
+        self.check_success(rv, 'test.txt')
+        self.check_success(rvn, 'newname.txt')
 
     def test_large_file_post(self):
         ''' Send file via POST with large file '''
         # curl -X POST -F file=@test.txt http://host/
-        rvf = self.client.post('/', data={'file': (self.largefile, 'test.txt')})
+        rvf = self.client.post('/', data={'file': (self.largefile,
+                                                   'test.txt')})
         # curl -X POST -T test.txt http://host/
-        rvs = self.client.post('/test.txt', data='content' * MAX_FILE_SIZE)
+        rvs = self.client.post('/test.txt', data='content' * self.maxsize)
 
-        self.assertEqual(rvf.status_code, 413)
-        self.assertEqual(rvs.status_code, 413)
+        self.check_largefile(rvf)
+        self.check_largefile(rvs)
 
     def test_large_file_put(self):
         ''' Send file via PUT with large file '''
         # curl -X PUT -F file=@test.txt http://host/
         rvf = self.client.put('/', data={'file': (self.largefile, 'test.txt')})
         # curl -X PUT -T test.txt http://host/
-        rvs = self.client.put('/test.txt', data='content' * MAX_FILE_SIZE)
+        rvs = self.client.put('/test.txt', data='content' * self.maxsize)
 
-        self.assertEqual(rvf.status_code, 413)
-        self.assertEqual(rvs.status_code, 413)
+        self.check_largefile(rvf)
+        self.check_largefile(rvs)
 
     def test_empty_file_post(self):
         ''' Send file via POST with empty file '''
@@ -114,10 +122,8 @@ class HandlerTests(unittest.TestCase):
         # curl -X PUT -F -T empty.txt
         rvs = self.client.post('/empty.txt', data='')
 
-        self.assertEqual(rvf.status_code, 400)
-        self.assertEqual(rvs.status_code, 400)
-        self.assertEqual(rvs.data, 'No data received')
-        self.assertEqual(rvf.data, 'No data received')
+        self.check_badrequest(rvf)
+        self.check_badrequest(rvs)
 
 if __name__ == '__main__':
     unittest.main()

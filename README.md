@@ -7,23 +7,11 @@ Made for (only tested) [`curl`](https://curl.haxx.se/).
 
 Inspired by [`transfer.sh`](https://github.com/dutchcoders/transfer.sh/).
 
-### Configuration
+### How to use
 
-Configuration file is `config.py`.
+This project supports python2 only, python3 will be supported soon.
 
-You might want to change `UPLOAD_DIR` to another place to store files. 
-
-This change should also be reflected to `conf/nginx/default.conf` in `location /d/`
-
-If you use `docker`, you might want to update this directory in 
-`docker-compose.yml` to make files stored in host instead of container.
-
-
-### How to deploy
-
->Note: at the moment, I only make it work on python2. python3 will be supported soon.
-
-#### Using virtualenv
+Using `virtualenv` is highly recommended to run the project for testing:
 
 - Create your virtualenv
 - Clone this repo
@@ -32,59 +20,103 @@ If you use `docker`, you might want to update this directory in
 
 The app should run on default port `5000`.
 
+### File storage
 
-#### Using docker-compose
+This app is made to support 2 types of storage:
 
-> Note: docker will try to bind to port `80` for `nginx`. 
-> Make sure your docker has permission to do that.
-> If you don't want docker to use `80`, change it in `Dockerfile-nginx`.
+- File system
+- S3
 
-Very easy in 2 steps:
+
+You can specify which storage type in `config.py` by changing `STORAGE` value.
+File system is the choice by default.
+
+#### File system
+
+The store dir is defined by `UPLOAD_DIR` in `config.py`.
+
+You have to create this directory your self before running the app, otherwise
+you will get an error when start it up.
+
+You will also have to update `conf/nginx/file_system.conf` so Nginx can serve
+your files directly.
+
+#### S3
+
+The bucket is defined by `AWS_BUCKET` in `config.py`
+
+This app uses `boto3` to work with S3. So configure your credentials in [here](http://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration)
+
+You should use a dedicated IAM role for this app, make sure your IAM has write 
+access to PUT object to bucket.
+
+You bucket should be public so Nginx can serve files from your bucket. Update
+your bucket in `conf/nginx/s3.conf`.
+
+Below is a sample policy for your bucket:
+
+  ```
+  {
+        "Version": "2012-10-17",
+        "Id": "Policy1470122774736",
+        "Statement": [
+                {
+                    "Sid": "Stmt1470122771419",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": "s3:GetObject",
+                    "Resource": "arn:aws:s3:::your_bucket/*"
+                }
+        ]
+  }
+  ```
+
+
+### Deploy app with nginx and gunicorn
+
+Nginx is the choice of web server for this app from start. Nginx has two
+purposes:
+
+- Proxies requests to gunicorn.
+- Serves static files directly.
+
+[Gunicorn](http://gunicorn.org/) is chosen to be a `wsgi` http server.
+
+
+Docker will expose port `8888` so make sure this port is available on your
+host.
+
+To use docker compose:
 
 - `docker-compse build`
 - `docker-compose up`
 
-The app should be available on port `80`
+The app should be available on port `8888`.
 
-#### Upload file with `curl`
+See `docker-compose.yml` and `Dockerfile-*` for detail.
 
-With `curl`, simply do:
+
+#### Upload file
+
+Upload file with PUT:
 
 ```
-$ curl --upload-file /path/to/your/file localhost:5000 -s
+$ curl --upload-file /path/to/your/file localhost:8888 -s
 ```
 
-or
+Also support `multipart/form-data` file upload:
+
 
 ```
 $ curl -X POST -F file=@/path/to/your/file -s
 ```
 
-There are two urls for you:
-
-- `preview`: A Preview page with very basic info of the file (file name, file size, mime type, download). 
-- `download`: Direct link to download.
-
-
 Sample result:
 
 ```
-$ curl --upload-file Pictures/wallpaper/saigon.jpeg localhost -s
-{
-  "download": "http://localhost/d/MQQWJQ/saigon.jpeg", 
-  "preview": "http://localhost/MQQWJQ/saigon.jpeg"
-}
+$ curl --upload-file Pictures/wallpaper/saigon.jpeg localhost:8888 -s
+http://localhost:8888/MQQWJQ/saigon.jpeg
 
-```
-
-Using [`jq`](https://stedolan.github.io/jq/):
-
-```
-$ curl --upload-file Pictures/wallpaper/saigon.jpeg localhost -s | jq '.["preview"]'
-"http://localhost/8NsgzY/saigon.jpeg"
-
-$ curl --upload-file Pictures/wallpaper/saigon.jpeg localhost -s | jq '.["download"]'
-"http://localhost/d/xS6HPF/saigon.jpeg"
 ```
 
 ### License

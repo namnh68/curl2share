@@ -2,7 +2,7 @@ proxy:
     build: .
     dockerfile: Dockerfile-nginx
     ports:
-        - "80:80"
+        - "8888:80"
     links:
         - app
     volumes:

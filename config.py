@@ -1,13 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# directory store files. MANDATORY
+# storage type ( S3 or FILESYSTEM )
+STORAGE = 'FILESYSTEM'
+# directory to store files uploaded in local file system
 UPLOAD_DIR = '/tmp/uploads'
+# s3 bucket to store files uploaded
+AWS_BUCKET = 'curl2share'
 # length of uri in random format. Default '6'
 RAND_DIR_LENGTH = 6
-# max file size. MANDATORY
-MAX_FILE_SIZE = 1024 * 1024 * 10
-# log level(CRITICAL, ERROR, WARNING, INFO, DEBUG). Default 'INFO'
+# maximum file size allowed to upload in MB
+MAX_FILE_SIZE = 10
+# log level
 LOG_LEVEL = 'INFO'
-# log file. MANDATORY
+# log file
 LOG_FILE = '/tmp/upload.log'
