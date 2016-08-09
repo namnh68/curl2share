@@ -2,6 +2,5 @@
   "name": "curl2share",
   "description": "File sharing made easy with curl",
   "repository": "https://github.com/cuongnv23/curl2share",
-  "logo": "https://i.imgur.com/aSumzo0.png",
   "keywords": ["curl", "python", "flask", "file", "sharing"]
 }
