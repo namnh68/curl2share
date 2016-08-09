@@ -38,10 +38,10 @@ File system is the choice by default.
 
 #### File system
 
-The store dir is defined by `UPLOAD_DIR` in `config.py`.
+The store dir is defined by `UPLOAD_DIR` in `config.py`. Make sure this
+directory is writable by this app.
 
-You have to create this directory your self before running the app, otherwise
-you will get an error when start it up.
+If the directory does not exist, this app will try to create it.
 
 You will also have to update `conf/nginx/file_system.conf` so Nginx can serve
 your files directly.

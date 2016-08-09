@@ -202,10 +202,11 @@ class FileSystem(object):
     '''
     def __init__(self):
         self.store_dir = UPLOAD_DIR
-        if not (os.path.isdir(self.store_dir) and
-                os.access(self.store_dir, os.W_OK)):
-            raise OSError('{} does not exist or inaccessible!'.format(
-                self.store_dir))
+        if not os.path.isdir(self.store_dir):
+            os.mkdir(self.store_dir)
+        if os.path.isdir(self.store_dir) and \
+                not os.access(self.store_dir, os.W_OK):
+            raise OSError('{} exists but not writable!'.format(self.store_dir))
 
     def mime(self, dest):
         '''
