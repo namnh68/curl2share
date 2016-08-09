@@ -1,13 +1,18 @@
 [![Build Status](https://travis-ci.org/cuongnv23/curl2share.svg?branch=master)](https://travis-ci.org/cuongnv23/curl2share)
-### About curl2share
+### ABOUT
 
 A simple file sharing app built on [`flask`](https://github.com/pallets/flask).
 
-Made for (only tested) [`curl`](https://curl.haxx.se/).
+Made for [`curl`](https://curl.haxx.se/).
 
 Inspired by [`transfer.sh`](https://github.com/dutchcoders/transfer.sh/).
 
-### How to use
+### DEMO
+
+https://curl2share.herokuapp.com
+
+
+### INSTALL
 
 This project supports python2 only, python3 will be supported soon.
 
@@ -20,7 +25,7 @@ Using `virtualenv` is highly recommended to run the project for testing:
 
 The app should run on default port `5000`.
 
-### File storage
+### FILE STORAGE
 
 This app is made to support 2 types of storage:
 
@@ -43,17 +48,18 @@ your files directly.
 
 #### S3
 
-The bucket is defined by `AWS_BUCKET` in `config.py`
+Bucket name is defined by `AWS_BUCKET` in `config.py`
 
-This app uses `boto3` to work with S3. So configure your credentials in [here](http://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration)
+This app uses [`boto3`](https://github.com/boto/boto3) to work with S3. 
+So configure your credentials by following [this guide](http://boto3.readthedocs.io/en/latest/guide/quickstart.html#configuration)
 
-You should use a dedicated IAM role for this app, make sure your IAM has write 
+
+- You should use a dedicated IAM role for this app, make sure your IAM has write 
 access to PUT object to bucket.
 
-You bucket should be public so Nginx can serve files from your bucket. Update
-your bucket in `conf/nginx/s3.conf`.
+- Your bucket must allow Nginx to have access permission to serve files.
 
-Below is a sample policy for your bucket:
+Below is a sample policy for bucket:
 
   ```
   {
@@ -72,53 +78,58 @@ Below is a sample policy for your bucket:
   ```
 
 
-### Deploy app with nginx and gunicorn
+### DOCKER COMPOSE FOR NGINX AND GUNICORN
 
-Nginx is the choice of web server for this app from start. Nginx has two
-purposes:
+This app can handle the download itself, but Nginx is a recommendation for this
+purpose.
 
-- Proxies requests to gunicorn.
-- Serves static files directly.
+[Nginx](https://github.com/nginx/nginx) is the choice of web server for this 
+app from start. Configurations files: `conf/nginx/*`.
 
-[Gunicorn](http://gunicorn.org/) is chosen to be a `wsgi` http server.
+[Gunicorn](https://github.com/benoitc/gunicorn) is chosen to be a `wsgi` http 
+server. Configuration file: `conf/gunicorn/gunicorn.cfg.py`.
 
+[Docker compose](https://github.com/docker/compose) helps you integrate
+Nginx and Gunicorn together as quick and easy way.
 
-Docker will expose port `8888` so make sure this port is available on your
-host.
+Docker will expose port `8888` for Nginx, make sure this port is available on 
+your host.
 
 To use docker compose:
 
-- `docker-compse build`
-- `docker-compose up`
+```
+$ docker-compose build
+$ docker-compose up
+```
+
 
 The app should be available on port `8888`.
 
 See `docker-compose.yml` and `Dockerfile-*` for detail.
 
-
-#### Upload file
-
-Upload file with PUT:
+#### USAGES 
 
 ```
-$ curl --upload-file /path/to/your/file localhost:8888 -s
+# upload file 
+
+$ curl --upload-file file.txt https://curl2share.herokuapp.com
+
+https://curl2share.herokuapp.com/QpLt8W/file.txt
+
+# upload file with multipart/form-data
+
+$ curl -X POST -F file=@file.txt https://curl2share.herokuapp.com
+
+https://curl2share.herokuapp.com/IboWMf/file.txt
+
+# upload file and rename
+
+$ curl --upload-file file.txt https://curl2share.herokuapp.com/c2s.txt
+
+https://curl2share.herokuapp.com/yXhS07/c2s.txt
 ```
 
-Also support `multipart/form-data` file upload:
+### LICENSE
 
-
-```
-$ curl -X POST -F file=@/path/to/your/file -s
-```
-
-Sample result:
-
-```
-$ curl --upload-file Pictures/wallpaper/saigon.jpeg localhost:8888 -s
-http://localhost:8888/MQQWJQ/saigon.jpeg
-
-```
-
-### License
-
-MIT
+See
+[LICENSE](https://github.com/cuongnv23/curl2share/blob/master/LICENSE)
