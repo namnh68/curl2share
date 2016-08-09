@@ -12,10 +12,10 @@ from config import MAX_FILE_SIZE, STORAGE
 from curl2share.utils import Util
 
 if STORAGE == 'S3':
-    from .storage import S3 as Storage
+    from curl2share.storage import S3 as Storage
 elif STORAGE == 'FILESYSTEM':
     from config import UPLOAD_DIR
-    from .storage import FileSystem as Storage
+    from curl2share.storage import FileSystem as Storage
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
@@ -29,19 +29,19 @@ logger = logging.getLogger(__name__)
 @app.errorhandler(400)
 def bad_request(err):
     ''' HTTP 400 code '''
-    return make_response('Bad request', 400)
+    return make_response('Bad Request', 400)
 
 
 @app.errorhandler(404)
 def not_found(err):
     ''' HTTP 404 code '''
-    return make_response('Not found', 404)
+    return make_response('Not Found', 404)
 
 
 @app.errorhandler(405)
 def not_allowed(err):
     ''' HTTP 405 code '''
-    return make_response('Method not allowed', 405)
+    return make_response('Method Not Allowed', 405)
 
 
 @app.errorhandler(413)
@@ -56,6 +56,11 @@ def internal_error(err):
     ''' HTTP 500 code '''
     return make_response('Something went wrong. Sorry for this inconvenience',
                          500)
+
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
 
 
 @app.route('/', defaults={'file_name': ''}, methods=['POST', 'PUT'])
@@ -134,7 +139,7 @@ def download(path):
 @app.route('/<path:path>', methods=['GET'])
 def preview(path):
     ''' Render a preview page based on file information '''
-    logger.info('GET {}'.format(path))
+    logger.info('Render preview page for {}'.format(path))
     dl_url = url_for('download', path=path, _external=True)
 
     if STORAGE == 'S3':

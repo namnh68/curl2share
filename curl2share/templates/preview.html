@@ -1,18 +1,15 @@
-<html>
-    <head>
-        <title>Curl2Share - {{ file_name }} </title>
-        <link href="{{url_for('static', filename='style.css', _external=True)}}" rel="stylesheet" type="text/css" </>
-        <link href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
-        <style>
-            body {
-                font-family: 'Droid Sans Mono', monospace;
-                font-size: 18px;
-            }
-        </style>
-        <h1 style="text-align: center;"><span style="font-family:Montserrat,sans-serif">{{ file_name }}</span></h1>
-        <h2 style="text-align: center;"><span style="font-family:Montserrat,sans-serif">Size</span>: {{ file_size }} bytes</h2>
-        <h2 style="text-align: center;"><span style="font-family:Montserrat,sans-serif">Type</span>: {{ file_type }}</h2>
-        <h2 style="text-align: center;"><span style="font-family:Montserrat,sans-serif"><a href="{{ url }}" class="myButton">Download</a></span></h2>
-    </head>
-</html>
+{% extends 'base.html' %}
+{% block content %}
+    <h1 style="text-align: center;">
+        <span style="font-family:Montserrat,sans-serif">{{ file_name }}</span>
+    </h1>
+    <h2 style="text-align: center;">
+        <span style="font-family:Montserrat,sans-serif">Size</span>: {{ file_size }} bytes
+    </h2>
+    <h2 style="text-align: center;">
+        <span style="font-family:Montserrat,sans-serif">Type</span>: {{ file_type }}
+    </h2>
+    <h2 style="text-align: center;">
+        <span style="font-family:Montserrat,sans-serif"><a href="{{ url }}" class="myButton">Download</a></span>
+    </h2>
+{% endblock %} 

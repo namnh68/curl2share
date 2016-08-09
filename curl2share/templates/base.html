@@ -1,0 +1,27 @@
+<html>
+    <head>
+       {% if file_name %}
+           <title>curl2share - {{ file_name }}</title>
+       {% else %}
+           <title>curl2share</title>
+       {% endif %}
+        <p>
+            <a href="http://github.com/cuongnv23/curl2share">
+                <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
+            </a>
+        </p>
+        <link href="{{url_for('static', filename='style.css', _external=True)}}" rel="stylesheet" type="text/css" </>
+        <link href="https://fonts.googleapis.com/css?family=Droid+Sans+Mono" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Montserrat" rel="stylesheet">
+        <style>
+            body {
+                    font-family: 'Droid Sans Mono', monospace;
+                    font-size: 14px;
+                    padding-left: 60px;
+                }
+        </style>
+        <body>
+            {% block content %}{% endblock %}
+        </body>
+    </head>
+</html>

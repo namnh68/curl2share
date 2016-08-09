@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h3>NAME</h3>
+    <p style="padding-left: 30px;"><strong>curl2share</strong> - file sharing made easy
+        with curl</p>
+    <p>&nbsp;</p>
+    <h3>DESCRIPTION</h3>
+    <p style="padding-left: 30px;">curl2share is a web server made to work with
+    shell and curl.</p>
+    <p style="padding-left: 30px;">Just curl your file and you will get a URL
+    for sharing.</p>
+    <p>&nbsp;</p>
+    <h3>USAGES&nbsp;</h3>
+    <p style="padding-left: 30px;"># upload file&nbsp;</p>
+    <p style="padding-left: 30px;">$ curl --upload-file file.txt
+    https://curl2share.herokuapp.com</p>
+    <p style="padding-left: 30px;"><a href="http://curl2share.herokuapp.com/QpLt8W/file.txt">https://curl2share.herokuapp.com/QpLt8W/file.txt</a></p>
+    <p style="padding-left: 30px;"># upload file with multipart/form-data</p>
+    <p style="padding-left: 30px;">$ curl -X POST -F file=@file.txt
+    https://curl2share.herokuapp.com</p>
+    <p style="padding-left: 30px;"><a
+       href="http://curl2share.herokuapp.com/IboWMf/file.txt">https://curl2share.herokuapp.com/IboWMf/file.txt</a></p>
+    <p style="padding-left: 30px;"># upload file and rename</p>
+    <p style="padding-left: 30px;">$&nbsp;curl --upload-file file.txt
+    https://curl2share.herokuapp.com/c2s.txt</p>
+    <p style="padding-left: 30px;"><a
+       href="https://curl2share.herokuapp.com/yXhS07/c2s.txt">https://curl2share.herokuapp.com/yXhS07/c2s.txt</a></p>
+    <p>&nbsp;</p>
+    <h3>AUTHOR</h3>
+    <p style="padding-left: 30px;">Cuong Nguyen (cuongnguyen23 at gmail dot com)</p>
+{% endblock %}
