@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/cuongnv23/curl2share.svg?branch=master)](https://travis-ci.org/cuongnv23/curl2share)
+
+[![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/cuongnv23/curl2share)
+
 ### ABOUT
 
 A simple file sharing app built on [`flask`](https://github.com/pallets/flask).
@@ -11,6 +14,7 @@ Inspired by [`transfer.sh`](https://github.com/dutchcoders/transfer.sh/).
 
 https://curl2share.herokuapp.com
 
+**WARNING**: This page is for demo purpose only and files maybe removed by Heroku.
 
 ### INSTALL
 
