@@ -18,7 +18,8 @@ https://curl2share.herokuapp.com
 
 ### INSTALL
 
-This project supports python2 only, python3 will be supported soon.
+This project supports python2 (2.7+) and python3 (3.4+) ~~python2 only, python3 
+will be supported soon~~.
 
 Using `virtualenv` is highly recommended to run the project for testing:
 
