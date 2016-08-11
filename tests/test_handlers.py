@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import os
 import tempfile
 
@@ -25,7 +26,7 @@ class HandlerTests(unittest.TestCase):
         ''' Create a tmp file for reading '''
         tmpdir = tempfile.mkdtemp()
         tmpfile = os.path.join(tmpdir, 'test.txt')
-        with open(tmpfile, 'wb') as f:
+        with open(tmpfile, 'w') as f:
             f.write(content)
         return tmpfile
 
@@ -60,8 +61,8 @@ class HandlerTests(unittest.TestCase):
         # curl -F file=@samplefile http://host/newname.txt
         rvn = self.client.post('/newname.txt',
                                data={'file': (self.samplefile, 'test.txt')})
-        self.check_success(rv, 'test.txt')
-        self.check_success(rvn, 'newname.txt')
+        self.check_success(rv, b'test.txt')
+        self.check_success(rvn, b'newname.txt')
 
     def test_post_stream(self):
         ''' Send file via POST in stream '''
@@ -70,8 +71,8 @@ class HandlerTests(unittest.TestCase):
         # curl -X POST -T test.txt http://host/newname.txt
         rvn = self.client.post('/newname.txt', data=self.samplefile)
 
-        self.check_success(rv, 'test.txt')
-        self.check_success(rvn, 'newname.txt')
+        self.check_success(rv, b'test.txt')
+        self.check_success(rvn, b'newname.txt')
 
     def test_put_form(self):
         ''' Send file via PUT in multipart/form '''
@@ -81,8 +82,8 @@ class HandlerTests(unittest.TestCase):
         rvn = self.client.put('/newname.txt',
                               data={'file': (self.samplefile, 'test.txt')})
 
-        self.check_success(rv, 'test.txt')
-        self.check_success(rvn, 'newname.txt')
+        self.check_success(rv, b'test.txt')
+        self.check_success(rvn, b'newname.txt')
 
     def test_put_stream(self):
         ''' Send file via PUT in stream '''
@@ -90,8 +91,8 @@ class HandlerTests(unittest.TestCase):
         rv = self.client.put('/test.txt', data=self.samplefile)
         # curl -X PUT -T test.txt http://host/newname.txt
         rvn = self.client.put('/newname.txt', data=self.samplefile)
-        self.check_success(rv, 'test.txt')
-        self.check_success(rvn, 'newname.txt')
+        self.check_success(rv, b'test.txt')
+        self.check_success(rvn, b'newname.txt')
 
     def test_large_file_post(self):
         ''' Send file via POST with large file '''
@@ -116,7 +117,10 @@ class HandlerTests(unittest.TestCase):
 
     def test_empty_file_post(self):
         ''' Send file via POST with empty file '''
-        from StringIO import StringIO
+        try:
+            from StringIO import StringIO
+        except ImportError:
+            from io import BytesIO as StringIO
         # curl -X POST -F file=@empty.txt http://host/
         rvf = self.client.post('/', data={'file': (StringIO(), 'empty.txt')})
         # curl -X PUT -F -T empty.txt

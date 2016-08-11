@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from __future__ import absolute_import
 import os
 import magic
 import logging
@@ -213,7 +214,7 @@ class FileSystem(object):
         Detect mime type by reading first 1024 bytes of file
         dest: file to detect mime type
          '''
-        return magic.from_buffer(open(dest).read(1024), mime=True)
+        return magic.from_buffer(open(dest, 'rb').read(1024), mime=True)
 
     def write(self, dest, req):
         '''
