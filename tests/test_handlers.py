@@ -124,7 +124,7 @@ class HandlerTests(unittest.TestCase):
         # curl -X POST -F file=@empty.txt http://host/
         rvf = self.client.post('/', data={'file': (StringIO(), 'empty.txt')})
         # curl -X PUT -F -T empty.txt
-        rvs = self.client.post('/empty.txt', data='')
+        rvs = self.client.put('/empty.txt', data='')
 
         self.check_badrequest(rvf)
         self.check_badrequest(rvs)
