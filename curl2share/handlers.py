@@ -10,7 +10,7 @@ from flask import Flask, request, make_response, \
 from werkzeug.utils import secure_filename
 
 from config import MAX_FILE_SIZE, STORAGE
-from curl2share.utils import Util
+from curl2share import utils
 
 if STORAGE == 'S3':
     from curl2share.storage import S3 as Storage
@@ -22,7 +22,6 @@ app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = MAX_FILE_SIZE * 1024 * 1024
 
 s = Storage()
-util = Util()
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,7 @@ def index():
 @app.route('/<string:file_name>', methods=['POST', 'PUT'])
 def upload(file_name):
     ''' Write data '''
-    sdir = util.rand()
+    sdir = utils.rand()
     ct = request.headers.get('Content-Type')
     if ct and 'multipart/form-data' in ct:
         req = request.files['file']
@@ -78,7 +77,7 @@ def upload(file_name):
         req.seek(0, os.SEEK_END)
         filesize = req.tell()
         req.seek(0)
-        util.validate_filesize(filesize)
+        utils.validate_filesize(filesize)
         # Handle in case no file_name input.
         # Eg: curl -X POST -F file=@file server
         if not file_name:
@@ -90,7 +89,7 @@ def upload(file_name):
         # Eg: curl -X POST|PUT --upload-file myfile
         req = request.stream
         filesize = request.content_length
-        util.validate_filesize(filesize)
+        utils.validate_filesize(filesize)
         fname = secure_filename(file_name)
     else:
         logger.error('Invalid request header: \n{}'.format(request.headers))
