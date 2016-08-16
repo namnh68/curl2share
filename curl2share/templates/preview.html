@@ -12,4 +12,9 @@
     <h2 style="text-align: center;">
         <span style="font-family:Montserrat,sans-serif"><a href="{{ url }}" class="myButton">Download</a></span>
     </h2>
+    {% if 'image' in file_type %}
+        <center>
+            <img class='resize_fit_center' src="{{ url }}" />
+        </center>
+    {% endif %}
 {% endblock %} 
