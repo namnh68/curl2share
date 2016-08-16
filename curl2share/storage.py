@@ -10,7 +10,7 @@ from flask import request, abort
 import boto3 as boto
 import botocore
 
-from config import AWS_BUCKET, UPLOAD_DIR
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -21,7 +21,8 @@ class S3(object):
     Handle request and write to S3
     '''
     def __init__(self):
-        self.bucket = AWS_BUCKET
+        if config.STORAGE == 'S3':
+            self.bucket = config.AWS_BUCKET
         self.conn = boto.resource('s3')
         self.client = boto.client('s3')
 
@@ -202,7 +203,8 @@ class FileSystem(object):
     Handle request and write to file system
     '''
     def __init__(self):
-        self.store_dir = UPLOAD_DIR
+        if config.STORAGE == 'FILESYSTEM':
+            self.store_dir = config.UPLOAD_DIR
         if not os.path.isdir(self.store_dir):
             os.mkdir(self.store_dir)
         if os.path.isdir(self.store_dir) and \
