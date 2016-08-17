@@ -193,7 +193,7 @@ class S3(object):
         resp = self.exists(key)
         if resp:
             headers = resp['HTTPHeaders']
-            _info['content_length'] = headers['content-length']
+            _info['content_length'] = int(headers['content-length'])
             _info['content_type'] = headers['content-type']
             return _info
 

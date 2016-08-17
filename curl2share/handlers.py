@@ -145,14 +145,14 @@ def preview(path):
     if STORAGE == 'S3':
         info = s.info(path)
         filename = os.path.basename(path)
-        filesize = '{:,}'.format(int(info['content_length']))
+        filesize = info['content_length']
         filetype = info['content_type']
     if STORAGE == 'FILESYSTEM':
         dst = os.path.join(UPLOAD_DIR, path)
         if not os.path.isfile(dst):
             abort(404)
         filename = os.path.basename(dst)
-        filesize = '{:,}'.format(os.path.getsize(dst))
+        filesize = os.path.getsize(dst)
         filetype = s.mime(dst)
 
     return render_template('preview.html',

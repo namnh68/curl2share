@@ -4,7 +4,8 @@
         <span style="font-family:Montserrat,sans-serif">{{ file_name }}</span>
     </h1>
     <h2 style="text-align: center;">
-        <span style="font-family:Montserrat,sans-serif">Size</span>: {{ file_size }} bytes
+        <span style="font-family:Montserrat,sans-serif">Size</span>: {{
+        '{:,}'.format(file_size) }} bytes
     </h2>
     <h2 style="text-align: center;">
         <span style="font-family:Montserrat,sans-serif">Type</span>: {{ file_type }}
