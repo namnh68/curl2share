@@ -9,7 +9,7 @@ import unittest
 import pytest
 
 from tests.context import app
-from config import MAX_FILE_SIZE
+import config
 
 
 @pytest.fixture
@@ -44,7 +44,7 @@ class HandlerTests(unittest.TestCase):
         self.assertEqual(resp.status_code, 400)
 
     def setUp(self):
-        self.maxsize = MAX_FILE_SIZE * 1024 * 1024
+        self.maxsize = config.MAX_FILE_SIZE * 1024 * 1024
         self.client = client()
         self.samplefile = self.create_tmpfile('content')
         self.largefile = self.create_tmpfile('content' * self.maxsize)
@@ -118,9 +118,9 @@ class HandlerTests(unittest.TestCase):
     def test_empty_file_post(self):
         ''' Send file via POST with empty file '''
         try:
-            from StringIO import StringIO
+            from StringIO import StringIO  # python2
         except ImportError:
-            from io import BytesIO as StringIO
+            from io import BytesIO as StringIO  # python3
         # curl -X POST -F file=@empty.txt http://host/
         rvf = self.client.post('/', data={'file': (StringIO(), 'empty.txt')})
         # curl -X PUT -F -T empty.txt
