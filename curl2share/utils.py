@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
+from __future__ import absolute_import, division
 import string
 import logging
 from random import SystemRandom as SR
 
-from flask import abort
+from flask import abort, request
 
-from config import RAND_DIR_LENGTH, MAX_FILE_SIZE
+import config
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def rand():
     Generate random string to be url path
     '''
     return ''.join(SR().choice(string.ascii_letters + string.digits)
-                   for _ in range(RAND_DIR_LENGTH))
+                   for _ in range(config.RAND_DIR_LENGTH))
 
 
 def validate_filesize(size):
@@ -27,9 +27,8 @@ def validate_filesize(size):
     Validate if file size is too large or empty
     size: size to validate
     '''
-    if size > MAX_FILE_SIZE * 1024 * 1024:
-        logger.error('File too large: {}MB'.format(size/1024/1024))
+    if size > config.MAX_FILE_SIZE * 1024 * 1024:
         abort(413)
-    if not size:
-        logger.error('File is empty.')
-        abort(400)
+    if not request.content_length or not size:
+        logger.error('Request {} {} with empty file.'.format(request.method, request.path))
+        abort(411)
