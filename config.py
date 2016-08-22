@@ -14,7 +14,7 @@ MAX_FILE_SIZE = 10
 # log level
 LOG_LEVEL = 'INFO'
 # log file
-LOG_FILE = '/tmp/uploads/curl2share.log'
+LOG_FILE = '/tmp/curl2share.log'
 # Use Redis as caching layer for S3 (True or False).
 REDIS = True
 # Host of redis. Default 'localhost'. 'redis' for docker-compose
