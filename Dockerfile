@@ -4,6 +4,4 @@ RUN pip install -r /tmp/requirements.txt
 COPY . /opt/app/
 COPY conf/gunicorn/gunicorn.cfg.py /opt/app/
 WORKDIR /opt/app
-RUN find . \( -name __pycache__ -o -name '*.pyc' \) -delete
-RUN tox
 CMD ["gunicorn", "-c", "gunicorn.cfg.py", "run:app"]

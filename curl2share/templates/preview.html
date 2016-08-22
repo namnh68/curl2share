@@ -5,7 +5,7 @@
     </h1>
     <h2 style="text-align: center;">
         <span style="font-family:Montserrat,sans-serif">Size</span>: {{
-        '{:,}'.format(file_size) }} bytes
+        '{:,}'.format(file_size | int) }} bytes
     </h2>
     <h2 style="text-align: center;">
         <span style="font-family:Montserrat,sans-serif">Type</span>: {{ file_type }}
