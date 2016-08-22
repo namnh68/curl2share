@@ -81,9 +81,28 @@ Below is a sample policy for bucket:
         ]
   }
   ```
+- With S3, you can have [redis](https://github.com/antirez/redis) as a caching layer to store information
+of file (file size, file type). See `config.py` for details. 
+    - By using redis to cache object metadata, you can reduce request ot S3, because in S3, [every request
+      counts](https://aws.amazon.com/s3/pricing/).
+    - As a caching layer, even if redis server is down, this app should be still up instead of crash. Of course in this
+      case metadata will be retrieved from S3.
+
+### DOCKER
+
+The easiest way to get started with `curl2share` is using `Dockerfile`:
+
+```
+$ git clone https://github.com/cuongnv23/curl2share.git
+$ cd curl2share
+$ docker build . --rm -t curl2share
+$ docker run --rm -p 5000:5000 -v /tmp/uploads:/tmp/uploads/ curl2share
+```
+
+This will run `curl2share` on port 5000 with storage directory is `/tmp/uploads`.
 
 
-### DOCKER COMPOSE FOR NGINX AND GUNICORN
+### DOCKER COMPOSE
 
 This app can handle the download itself, but Nginx is a recommendation for this
 purpose.
@@ -97,7 +116,7 @@ server. Configuration file: `conf/gunicorn/gunicorn.cfg.py`.
 [Docker compose](https://github.com/docker/compose) helps you integrate
 Nginx and Gunicorn together as quick and easy way.
 
-Docker will expose port `8888` for Nginx, make sure this port is available on 
+`docker-compose` will expose port `8888` for Nginx, make sure this port is available on 
 your host.
 
 To use docker compose:
@@ -107,10 +126,7 @@ $ docker-compose build
 $ docker-compose up
 ```
 
-
-The app should be available on port `8888`.
-
-See `docker-compose.yml` and `Dockerfile-*` for detail.
+See `docker-compose.yml` for detail.
 
 #### USAGES 
 
