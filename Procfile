@@ -1,1 +1,1 @@
-web: gunicorn -c conf/gunicorn/gunicorn.cfg.py run:app  
+web: gunicorn -c docker/gunicorn/conf/gunicorn.cfg.py run:app
