@@ -3,7 +3,7 @@ services:
     proxy:
         build:
             context: .
-            dockerfile: docker/nginx/Dockerfile 
+            dockerfile: docker/nginx/Dockerfile
         ports:
             - "8888:80"
         links:
@@ -21,6 +21,8 @@ services:
             - redis
         volumes:
             - /tmp/uploads/:/tmp/uploads
+        depends_on:
+            - redis
 
     redis:
         image: redis:alpine
