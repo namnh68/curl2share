@@ -39,9 +39,9 @@ class HandlerTests(unittest.TestCase):
         ''' Validate request of large file '''
         self.assertEqual(resp.status_code, 413)
 
-    def check_badrequest(self, resp):
+    def check_emptyfile(self, resp):
         ''' Validate bad request '''
-        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.status_code, 411)
 
     def setUp(self):
         self.maxsize = config.MAX_FILE_SIZE * 1024 * 1024
@@ -126,8 +126,8 @@ class HandlerTests(unittest.TestCase):
         # curl -X PUT -F -T empty.txt
         rvs = self.client.put('/empty.txt', data='')
 
-        self.check_badrequest(rvf)
-        self.check_badrequest(rvs)
+        self.check_emptyfile(rvf)
+        self.check_emptyfile(rvs)
 
 if __name__ == '__main__':
     unittest.main()
