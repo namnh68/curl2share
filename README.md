@@ -130,25 +130,47 @@ See `docker-compose.yml` for detail.
 
 #### USAGES 
 
+
+- Upload file 
 ```
-# upload file 
+$ curl --upload-file screen.png https://curl2share.herokuapp.com
 
-$ curl --upload-file file.txt https://curl2share.herokuapp.com
-
-https://curl2share.herokuapp.com/QpLt8W/file.txt
-
-# upload file with multipart/form-data
-
-$ curl -X POST -F file=@file.txt https://curl2share.herokuapp.com
-
-https://curl2share.herokuapp.com/IboWMf/file.txt
-
-# upload file and rename
-
-$ curl --upload-file file.txt https://curl2share.herokuapp.com/c2s.txt
-
-https://curl2share.herokuapp.com/yXhS07/c2s.txt
+https://curl2share.herokuapp.com/Q8DxbG/screen.png
 ```
+
+![upload](screenshots/curl2share_upload_file.png "Upload file")
+
+
+- Upload file and rename
+
+```
+$ curl --upload-file screen.png https://curl2share.herokuapp.com/python.png
+
+https://curl2share.herokuapp.com/URVXqm/python.png
+
+```
+![rename_file](screenshots/curl2share_upload_rename.png "Upload and rename file")
+
+- Detect actual mime type so you're not fooled by (easy-to-be-modified) extension
+
+```
+$ curl --upload-file screen.png https://curl2share.herokuapp.com/python.txt
+
+https://curl2share.herokuapp.com/0hBlyn/python.txt
+
+```
+![actual_mime_type](screenshots/curl2share_upload_actual_mime.png "Detect actual mime type")
+
+
+- Support upload file with multipart/form-data
+
+```
+$ curl -X POST -F file=@screen.png https://curl2share.herokuapp.com
+
+https://curl2share.herokuapp.com/dJQZnc/screen.png
+```
+
+
 
 ### LICENSE
 
