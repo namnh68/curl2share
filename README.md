@@ -138,7 +138,7 @@ $ curl --upload-file screen.png https://curl2share.herokuapp.com
 https://curl2share.herokuapp.com/Q8DxbG/screen.png
 ```
 
-![upload](screenshots/curl2share_upload_file.png "Upload file")
+![upload](curl2share/static/screenshots/curl2share_upload_file.png "Upload file")
 
 
 - Upload file and rename
@@ -149,7 +149,7 @@ $ curl --upload-file screen.png https://curl2share.herokuapp.com/python.png
 https://curl2share.herokuapp.com/URVXqm/python.png
 
 ```
-![rename_file](screenshots/curl2share_upload_rename.png "Upload and rename file")
+![rename_file](curl2share/static/screenshots/curl2share_upload_rename.png "Upload and rename file")
 
 - Detect actual mime type so you're not fooled by (easy-to-be-modified) extension
 
@@ -159,7 +159,7 @@ $ curl --upload-file screen.png https://curl2share.herokuapp.com/python.txt
 https://curl2share.herokuapp.com/0hBlyn/python.txt
 
 ```
-![actual_mime_type](screenshots/curl2share_upload_actual_mime.png "Detect actual mime type")
+![actual_mime_type](curl2share/static/screenshots/curl2share_upload_actual_mime.png "Detect actual mime type")
 
 
 - Support upload file with multipart/form-data
