@@ -147,9 +147,11 @@ class S3(object):
         path: object path to download
         '''
         if self.exists(path):
+            scheme = 'https://'
+            s3_url = '/'.join([self.bucket + '.' + 's3.amazonaws.com', path])
+            url = scheme + s3_url
             self.logger.info('{} downloaded from S3'.format(path))
-            # TODO: should find a way to avoid reading all in once
-            return self.conn.Object(self.bucket, path).get()['Body'].read()
+            return url
 
     def info(self, path):
         '''
@@ -214,13 +216,12 @@ class FileSystem(object):
                 buf = 1024 * 16
                 while True:
                     chunk = req.read(buf)
-                    if chunk:
-                        f.write(chunk)
-                        # double chunk size in each iteration
-                        if buf < buf_max:
-                            buf = buf * 2
-                    else:
+                    if not chunk:
                         break
+                    f.write(chunk)
+                    # double chunk size in each iteration
+                    if buf < buf_max:
+                        buf = buf * 2
             self.logger.info('{} saved to disk.'.format(dst))
             return True
 

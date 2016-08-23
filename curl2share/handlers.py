@@ -124,13 +124,9 @@ def download(path):
     '''
     Return file.
     This method should be used in development only.
-    In production, you should consider using nginx for this.
+    In production, consider using nginx for this.
     '''
     filename = secure_filename(os.path.basename(path))
-    if config.STORAGE == 'S3':
-        body = s3.get(path)
-        resp = make_response(body)
-
     if config.STORAGE == 'LOCAL':
         resp = fs.get(path)
 
@@ -144,7 +140,6 @@ def download(path):
 def preview(path):
     ''' Render a preview page based on file information '''
     logger.info('Rendering preview page for {}'.format(path))
-    dl_url = url_for('download', path=path, _external=True)
 
     if config.STORAGE == 'S3':
         if config.REDIS:
@@ -158,10 +153,12 @@ def preview(path):
                 redis.set(path, info)
         else:
             info = s3.info(path)
+        dl_url = s3.get(path)
         filesize = info['content_length']
         filetype = info['content_type']
 
     if config.STORAGE == 'LOCAL':
+        dl_url = url_for('download', path=path, _external=True)
         dst = os.path.join(config.UPLOAD_DIR, path)
         if not os.path.isfile(dst):
             abort(404)
