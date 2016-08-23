@@ -11,20 +11,50 @@
     for sharing.</p>
     <p>&nbsp;</p>
     <h3>USAGES&nbsp;</h3>
-    <p style="padding-left: 30px;"># upload file&nbsp;</p>
-    <p style="padding-left: 30px;">$ curl --upload-file file.txt
-    https://curl2share.herokuapp.com</p>
-    <p style="padding-left: 30px;"><a href="http://curl2share.herokuapp.com/QpLt8W/file.txt">https://curl2share.herokuapp.com/QpLt8W/file.txt</a></p>
-    <p style="padding-left: 30px;"># upload file with multipart/form-data</p>
-    <p style="padding-left: 30px;">$ curl -X POST -F file=@file.txt
-    https://curl2share.herokuapp.com</p>
-    <p style="padding-left: 30px;"><a
-       href="http://curl2share.herokuapp.com/IboWMf/file.txt">https://curl2share.herokuapp.com/IboWMf/file.txt</a></p>
-    <p style="padding-left: 30px;"># upload file and rename</p>
-    <p style="padding-left: 30px;">$&nbsp;curl --upload-file file.txt
-    https://curl2share.herokuapp.com/c2s.txt</p>
-    <p style="padding-left: 30px;"><a
-       href="https://curl2share.herokuapp.com/yXhS07/c2s.txt">https://curl2share.herokuapp.com/yXhS07/c2s.txt</a></p>
+    <li style="padding-left: 30px;">Upload file</li>
+    <p style="padding-left: 30px;">
+    <code>
+    $ curl --upload-file screen.png https://curl2share.herokuapp.com
+    <br><br>
+    https://curl2share.herokuapp.com/Q8DxbG/screen.png
+    </code>
+    </p>
+    <p style="padding-left: 30px;">
+    <img src="{{url_for('static', filename='screenshots/curl2share_upload_file.png', _external=True)}}"
+         alt="Upload file" width="600" height="302" /></p>
+
+    <li style="padding-left: 30px;">Upload file and rename</li>
+    <p style="padding-left: 30px;">
+    <code>
+    $ curl --upload-file screen.png https://curl2share.herokuapp.com/python.png
+    <br><br>
+    https://curl2share.herokuapp.com/URVXqm/python.png
+    </code>
+    </p>
+    <p style="padding-left: 30px;"><img
+       src="{{url_for('static', filename='screenshots/curl2share_upload_rename.png', _external=True)}}"
+       alt="Upload and rename file" width="600" height="303" /></p>
+
+    <li style="padding-left: 30px;">Upload file with multipart/form-data</li>
+    <p style="padding-left: 30px;">
+    <code>
+    $ curl -X POST -F file=@screen.png https://curl2share.herokuapp.com
+    <br><br>
+    https://curl2share.herokuapp.com/dJQZnc/screen.png
+    </code>
+    <br><br>
+    </p>
+    <li style="padding-left: 30px;">Detect actual mime type so you're not fooled by the (easy-to-be-modified) extension</li>
+    <p style="padding-left: 30px;">
+    <code>
+    $ curl --upload-file screen.png https://curl2share.herokuapp.com/python.txt 
+    <br><br>
+    https://curl2share.herokuapp.com/0hBlyn/python.txt
+    </code>
+    </p>
+    <p style="padding-left: 30px;">
+    <img src="{{url_for('static', filename='screenshots/curl2share_upload_actual_mime.png', _external=True)}}"
+       alt="Detect actual mime type" width="600" height="304" /></p>
     <p>&nbsp;</p>
     <h3>AUTHOR</h3>
     <p style="padding-left: 30px;">Cuong Nguyen (cuongnguyen23 at gmail dot com)</p>
