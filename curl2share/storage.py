@@ -33,6 +33,18 @@ class S3(object):
         '''
         return magic.from_buffer(fheader, mime=True)
 
+    def healthcheck(self, path='healthcheck/test'):
+        '''
+        Detect S3 connection status by uploading a file to bucket
+        '''
+        try:
+            from StringIO import StringIO
+        except ImportError:
+            from io import BytesIO as StringIO
+
+        body = StringIO(b'healthcheck')
+        return self.upload(path, body)
+
     def upload(self, path, req):
         '''
         Directly upload file to s3. Use this for small file size
@@ -244,6 +256,15 @@ class Redis(object):
                                     port=self.port,
                                     decode_responses=True)
         self.logger = logging.getLogger(__name__ + '.' + self.__class__.__name__)
+
+    def healthcheck(self):
+        ''' Return redis connection status '''
+        try:
+            insert = self.rd.set('test', 'healthcheck')
+            get = (self.rd.get('test') == 'healthcheck')
+            return insert and get
+        except:
+            return False
 
     def get(self, key):
         ''' Return info of key from redis '''
