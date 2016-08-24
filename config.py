@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 # storage type ( S3 or LOCAL )
-STORAGE = 'LOCAL'
+STORAGE = 'S3'
 # directory to store files uploaded in local file system
-UPLOAD_DIR = '/tmp/uploads'
+UPLOAD_DIR = '/tmp/curl2share'
 # s3 bucket to store files uploaded
 AWS_BUCKET = 'curl2share'
 # length of uri in random format. Default '6'
@@ -17,7 +17,7 @@ LOG_LEVEL = 'INFO'
 LOG_FILE = '/tmp/curl2share.log'
 # Use Redis as caching layer for S3 (True or False).
 REDIS = True
-# Host of redis. Default 'localhost'. 'redis' for docker-compose
+# Host of redis. Default 'localhost'.
 REDIS_HOST = 'localhost'
 # Port of redis. Default 6379
 REDIS_PORT = 6379
