@@ -5,7 +5,7 @@ from __future__ import absolute_import, division
 import os
 import logging
 
-from flask import Flask, request, make_response, abort, url_for, render_template
+from flask import Flask, request, make_response, abort, url_for, render_template, jsonify
 from werkzeug.utils import secure_filename
 
 import config
@@ -54,8 +54,8 @@ def not_allowed(err):
 @app.errorhandler(413)
 def file_too_large(err):
     ''' HTTP 413 code '''
-    size = request.content_length / 1024 / 1024
-    logger.error('Request {} {} file too large {}MB.'.format(request.path, request.method, size))
+    size = request.content_length // 1024 // 1024
+    logger.error('Request {} {} file too large {}MB.'.format(request.method, request.path, size))
     return make_response('File too large. Limit {}MB'.format(config.MAX_FILE_SIZE), 413)
 
 
@@ -173,3 +173,29 @@ def preview(path):
                            file_type=filetype,
                            url=dl_url
                            )
+
+
+@app.route('/healthcheck', methods=['GET'])
+def healthcheck():
+    ''' Check availability of app '''
+    redis_enabled = False
+    redis_conn = ''
+    redis_host = ''
+    if config.STORAGE == 'LOCAL':
+        storage_writable = os.access(config.UPLOAD_DIR, os.W_OK)
+    elif config.STORAGE == 'S3':
+        redis_enabled = config.REDIS
+        if redis_enabled:
+            redis = Redis()
+            redis_conn = redis.healthcheck()
+            redis_host = config.REDIS_HOST
+        storage_writable = s3.healthcheck()
+
+    resp = jsonify(StorageType=config.STORAGE,
+                   StorageConnectionOK=storage_writable,
+                   RedisEnabled=redis_enabled,
+                   RedisHost=redis_host,
+                   RedisConnectionOK=redis_conn
+                   )
+
+    return resp
