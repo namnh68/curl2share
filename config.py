@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # storage type ( S3 or LOCAL )
-STORAGE = 'S3'
+STORAGE = 'LOCAL'
 # directory to store files uploaded in local file system
 UPLOAD_DIR = '/tmp/curl2share'
 # s3 bucket to store files uploaded
