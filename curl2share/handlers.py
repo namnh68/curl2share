@@ -5,7 +5,11 @@ from __future__ import absolute_import, division
 import os
 import logging
 
-from flask import Flask, request, make_response, abort, url_for, render_template, jsonify
+from flask import Flask, request, make_response, abort, \
+    url_for, render_template, jsonify
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 from werkzeug.utils import secure_filename
 
 import config
@@ -20,8 +24,11 @@ elif config.STORAGE == 'LOCAL':
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_FILE_SIZE * 1024 * 1024
+app.config['RATELIMIT_HEADERS_ENABLED'] = True
 
 logger = logging.getLogger(__name__)
+
+limiter = Limiter(app, key_func=get_remote_address)
 
 
 @app.errorhandler(400)
@@ -59,6 +66,15 @@ def file_too_large(err):
     return make_response('File too large. Limit {}MB'.format(config.MAX_FILE_SIZE), 413)
 
 
+@app.errorhandler(429)
+def limit_exceeded(err):
+    ''' Rate limit message'''
+    remote_ip = get_remote_address()
+    logger.error('IP {} exceeded rate limit with request {} {}'.format(remote_ip, request.method,
+                                                                       request.path))
+    return make_response('Rate limit exceeded!', 429)
+
+
 @app.errorhandler(500)
 def internal_error(err):
     ''' HTTP 500 code '''
@@ -72,6 +88,7 @@ def index():
 
 @app.route('/', defaults={'file_name': ''}, methods=['POST', 'PUT'])
 @app.route('/<string:file_name>', methods=['POST', 'PUT'])
+@limiter.limit(config.RATE_LIMIT)
 def upload(file_name):
     ''' Write data '''
     sdir = utils.rand()
