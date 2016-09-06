@@ -22,4 +22,4 @@ REDIS_HOST = 'localhost'
 # Port of redis. Default 6379
 REDIS_PORT = 6379
 # Rate limit. Syntax should follow goo.gl/FWxPrF
-RATE_LIMIT = '200/hour;10/minute'
+RATE_LIMIT = '200/hour;15/minute'
