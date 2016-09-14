@@ -55,6 +55,9 @@ class S3(object):
         mime = self.mime(fheader)
         body = fheader + req.read()
         disposition = 'attachment; filename="{}"'.format(os.path.basename(path))
+        # Do not force download image
+        if 'image' in mime:
+            disposition = ''
         try:
             self.logger.info('Trying to upload {}'.format(path))
             resp = self.conn.Object(self.bucket, path).put(
@@ -82,6 +85,9 @@ class S3(object):
         fheader = req.read(1024)
         mime = self.mime(fheader)
         disposition = 'attachment; filename="{}"'.format(os.path.basename(path))
+        # Do not force download image
+        if 'image' in mime:
+            disposition = ''
         try:
             # initialize multipart upload
             self.logger.debug('Initializing multipart upload for {}'.format(path))
