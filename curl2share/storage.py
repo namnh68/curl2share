@@ -70,9 +70,10 @@ class S3(object):
                 return True
             else:
                 self.logger.error('Failed to upload {} to S3. Detail: \n{} '.format(path, resp))
-                return False
+                raise Exception
         except botocore.exceptions.ClientError:
             self.logger.critical('S3 connection error', exc_info=True)
+            abort(500)
 
     def upload_multipart(self, path, req, psize=1024*1024*5):
         '''
@@ -133,7 +134,7 @@ class S3(object):
                                                   UploadId=mpu['UploadId']
                                                   )
             self.logger.info('Multipart upload completed!')
-            return
+            return True
         except:
             self.logger.error('Failed to upload file {}'.format(path), exc_info=True)
             if mpu:
@@ -143,6 +144,7 @@ class S3(object):
                     Key=path,
                     UploadId=mpu['UploadId'])
                 self.logger.info('Upload of {} aborted!'.format(path))
+            abort(500)
 
     def exists(self, path):
         '''
