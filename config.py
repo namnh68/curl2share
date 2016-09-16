@@ -6,7 +6,7 @@ STORAGE = 'S3'
 # directory to store files uploaded in local file system
 UPLOAD_DIR = '/tmp/curl2share'
 # s3 bucket to store files uploaded
-AWS_BUCKET = 'itlfiles'
+AWS_BUCKET = 'itls3'
 # length of uri in random format. Default '6'
 RAND_DIR_LENGTH = 6
 # maximum file size allowed to upload in MB
