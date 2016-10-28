@@ -133,7 +133,7 @@ def upload(file_name):
 
     url = url_for("preview", path=dest, _external=True)
 
-    return url, 201
+    return url + '\n', 201
 
 
 @app.route('/d/<path:path>', methods=['GET'])
