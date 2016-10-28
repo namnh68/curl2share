@@ -33,7 +33,7 @@ class HandlerTests(unittest.TestCase):
     def check_success(self, resp, filename):
         ''' Validate response'''
         self.assertEqual(resp.status_code, 201)
-        self.assertTrue(resp.data.endswith(filename))
+        self.assertTrue(resp.data.endswith(filename + '\n'))
 
     def check_largefile(self, resp):
         ''' Validate request of large file '''
