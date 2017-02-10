@@ -8,8 +8,8 @@ from curl2share.handlers import app
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('-p', '--port', type=int, default=5000,
-                        help='Listen port. Default: "5000"')
+    parser.add_argument('-p', '--port', type=int, default=1993,
+                        help='Listen port. Default: "1993"')
     parser.add_argument('-i', '--ip', default='0.0.0.0',
                         help='Listen IP. Default: "0.0.0.0"')
     parser.add_argument('-d', '--debug', default=None, action='store_true',

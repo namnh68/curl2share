@@ -5,11 +5,16 @@ from __future__ import absolute_import, division
 import os
 import logging
 
-from flask import Flask, request, make_response, abort, \
-    url_for, render_template, jsonify
+from flask import Flask
+from flask import request
+from flask import make_response
+from flask import abort
+from flask import url_for
+from flask import render_template
+from flask import jsonify
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-
+from flask_sqlalchemy import SQLAlchemy
 from werkzeug.utils import secure_filename
 
 import config
@@ -25,6 +30,10 @@ elif config.STORAGE == 'LOCAL':
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = config.MAX_FILE_SIZE * 1024 * 1024
 app.config['RATELIMIT_HEADERS_ENABLED'] = True
+app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
+app.config.from_object('config')
+db = SQLAlchemy(app)
 
 logger = logging.getLogger(__name__)
 

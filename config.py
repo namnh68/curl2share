@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 
+# using sqlite as database
+basedir = os.path.abspath(os.path.dirname(__file__))
+SQLALCHEMY_DATABASE_URI = 'sqlite:////tmp/app.db'
 # storage type ( S3 or LOCAL )
 STORAGE = 'LOCAL'
 # directory to store files uploaded in local file system
@@ -23,3 +27,4 @@ REDIS_HOST = 'localhost'
 REDIS_PORT = 6379
 # Rate limit. Syntax should follow goo.gl/FWxPrF
 RATE_LIMIT = '200/hour;15/minute'
+
